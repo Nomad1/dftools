@@ -14,12 +14,15 @@ Main tool implements four different algorithms for Signed Field generation:
 # Other methods
 At this moment (May 2019) the very best algoritm for SDF generation is ImageMagik's Euclidean morphology:
 
-```convert "${infile}" \( +clone -negate -morphology Distance Euclidean:7 -level 50%,-50% \) -morphology Distance Euclidean:7 -compose Plus -composite -level 45%,55% -filter Jinc -distort Resize 25.0% "${outfile}"```
+```sh
+convert "${infile}" \( +clone -negate -morphology Distance Euclidean:7 -level 50%,-50% \) -morphology Distance Euclidean:7 -compose Plus -composite -level 45%,55% -filter Jinc -distort Resize 25.0% "${outfile}"
+```
 
 
 GLSL pixel shader code for ideal font rendering:
 
-```#define _SIMPLE_VERSION
+```glsl
+#define _SIMPLE_VERSION
 uniform sampler2D s_texture_0;
 
 in vec2 TexCoord;
