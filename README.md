@@ -2,15 +2,16 @@
 ## dftools
 Signed Distance Field generation tools in C#
 
-.Net 4.6 is recommended, but not required. Several classes use Vector2/Vector3i from System.Numerics or OpenTK/Unity/MonoGame, but also there is fallback struct-based implementation for these objects.  
+.Net 2.0 is required, 4.6.1 is recommended but not required. Several classes use Vector2/Vector3i with syntax compatible with from System.Numerics.Vectors/OpenTK/Unity/MonoGame, but also there is fallback struct-based implementation for these objects activated by ```NO_NUMERICS``` define.  
 
 Main tool implements four different algorithms for Signed Field generation:
 * Linear Sweep - very fast custom algorithm initially designed to find large unobstructed areas
 * Brute Force - simple bruteforce approach
-* Dead Reckoning - port from openll project, https://github.com/cginternals/openll-asset-generator/blob/master/source/llassetgen/source/DistanceTransform.cpp
+* Dead Reckoning - port from openll project <https://github.com/cginternals/openll-asset-generator/blob/master/source/llassetgen/source/DistanceTransform.cpp>
 * Signed Weight Field - algorithm for weight field generation. It's generally not compatible with SDF because of low field range (2-3 pixels) and requires custom shader. However, SWF should produce much higher image quality and also two intersecting SWF fields would have perfect border.
+* Eikonal Sweep - new algorithm described on <https://shaderfun.com>. Have some flaws, possibly due to porting from Unity: <https://github.com/chriscummings100/signeddistancefields/blob/master/Assets/SignedDistanceFields/SignedDistanceFieldGenerator.cs>  
 
-# Other works
+# Other methods
 At this moment (May 2019) the very best algoritm for SDF generation is ImageMagik's Euclidean morphology:
 
 ```convert "${infile}" \( +clone -negate -morphology Distance Euclidean:7 -level 50%,-50% \) -morphology Distance Euclidean:7 -compose Plus -composite -level 45%,55% -filter Jinc -distort Resize 25.0% "${outfile}"```

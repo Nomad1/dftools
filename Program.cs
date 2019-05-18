@@ -11,7 +11,7 @@ using PositionType = System.Numerics.Vector2i;
 
 namespace DistanceFieldTool
 {
-    class MainClass
+    public class DistanceFieldTool
     {
         // just in case you don't want to referene System.Numerics, custom Vector3i implementation
 #if NO_NUMERICS
@@ -35,7 +35,8 @@ namespace DistanceFieldTool
                 "\tsweep - Linear Sweep (custom algorithm, default)\n" +
                 "\tbrute - Brute Force approach\n" +
                 "\tdr - Dead Reckoning (port from openll)\n" +
-                "\tswf - Signed Weighed Field (experimental)\n";
+                "\tswf - Signed Weighed Field (experimental)\n" +
+                "\teikonal - Eikonal Sweep (port from shaderfun)\n";
 
 
         /// <summary>
@@ -293,6 +294,29 @@ namespace DistanceFieldTool
             }
         }
 
+        private static void ProcessEikonal(int[] inPixels, int width, int height, int[] resultPixels, int vectorWidth)
+        {
+            Eikonal eikonal = new Eikonal(width, height, (int arg) => inPixels[arg] != 0 ? 0.5f : -0.5f);
+
+            eikonal.EikonalSweep();
+
+            float[] values = eikonal.End();
+
+            for (int i = 0; i < values.Length; i++)
+            {
+                float nvalue = values[i] / vectorWidth;
+                if (nvalue <= 0.0f)
+                    continue;
+
+                if (nvalue > 1.0f)
+                    nvalue = 1.0f;
+
+                int ivalue = (int)(nvalue * 255.0f) & 0xff;
+
+                resultPixels[i] = (int)((ivalue << 16) | (ivalue << 8) | (ivalue) | (ivalue << 24));
+            }
+        }
+
         private static void ProcessDistanceField(string inFile, string outfile, int vectorWidth, string algo)
         {
             int width;
@@ -319,6 +343,10 @@ namespace DistanceFieldTool
                 case "swf":
                     Console.WriteLine("Working with Signed Weight Field algorithm");
                     ProcessSWF(inPixels, width, height, resultPixels, vectorWidth);
+                    break;
+                case "eikonal":
+                    Console.WriteLine("Working with Eikonal algorithm");
+                    ProcessEikonal(inPixels, width, height, resultPixels, vectorWidth);
                     break;
                 default:
                     Console.WriteLine("Algorithm {0} not found", algo);

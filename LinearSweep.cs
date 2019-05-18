@@ -83,7 +83,8 @@ namespace DistanceFieldTool
 #if PROFILE
             sw.Stop();
             Console.WriteLine("Pre processing: {0}", sw.ElapsedMilliseconds);
-            sw.Restart();
+            sw.Reset();
+            sw.Start();
 #endif
 
             // forward processing
@@ -103,7 +104,8 @@ namespace DistanceFieldTool
 #if PROFILE
             sw.Stop();
             Console.WriteLine("Forward processing: {0}", sw.ElapsedMilliseconds);
-            sw.Restart();
+            sw.Reset();
+            sw.Start();
 #endif
 
             // backward processing
@@ -124,7 +126,8 @@ namespace DistanceFieldTool
 #if PROFILE
             sw.Stop();
             Console.WriteLine("Backward processing: {0}", sw.ElapsedMilliseconds);
-            sw.Restart();
+            sw.Reset();
+            sw.Start();
 #endif
 
             if (extraPass)
@@ -151,7 +154,8 @@ namespace DistanceFieldTool
 #if PROFILE
                 sw.Stop();
                 Console.WriteLine("Final pass processing: {0}", sw.ElapsedMilliseconds);
-                sw.Restart();
+                sw.Reset();
+                sw.Start();
 #endif
             }
 
