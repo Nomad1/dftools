@@ -1,25 +1,27 @@
+## Distance Field tools
+This project contains several utilities written by @Nomad1 or ported from other projects for (Signed Distance Fields)[https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf] images generation. 
 
-## dftools
-Signed Distance Field generation tools in C#
+Code is written in C#. You need Mono or .Net 2.0 to run it (.Net 4.6.1 with System.Numerics.Vectors is recommended). Several classes use Vector2/Vector3i with System.Numerics.Vectors/OpenTK/Unity/MonoGame compatible syntax. Also there are fallback struct-based implementations activated by default with ```NO_NUMERICS``` define.
 
-.Net 2.0 is required, 4.6.1 is recommended but not required. Several classes use Vector2/Vector3i with syntax compatible with from System.Numerics.Vectors/OpenTK/Unity/MonoGame, but also there is fallback struct-based implementation for these objects activated by ```NO_NUMERICS``` define.  
-
-Main tool implements four different algorithms for Signed Field generation:
+The tool implements different algorithms for Signed Field generation:
 * Linear Sweep - very fast custom algorithm initially designed to find large unobstructed areas
 * Brute Force - simple bruteforce approach
-* Dead Reckoning - port from openll project <https://github.com/cginternals/openll-asset-generator/blob/master/source/llassetgen/source/DistanceTransform.cpp>
-* Signed Weight Field - algorithm for weight field generation. It's generally not compatible with SDF because of low field range (2-3 pixels) and requires custom shader. However, SWF should produce much higher image quality and also two intersecting SWF fields would have perfect border.
-* Eikonal Sweep - new algorithm described on <https://shaderfun.com>. Have some flaws, possibly due to porting from Unity: <https://github.com/chriscummings100/signeddistancefields/blob/master/Assets/SignedDistanceFields/SignedDistanceFieldGenerator.cs>  
+* Dead Reckoning - port from openll project generator: <https://github.com/cginternals/openll-asset-generator/>
+* Eikonal Sweep - new algorithm described on <https://shaderfun.com>. Have some flaws, possibly due to Unity backporting: <https://github.com/chriscummings100/signeddistancefields/>  
+* Signed Weight Field - experimental algorithm for weight-based field generation. It's generally not compatible with SDF because of low field range (2-3 pixels) and requires custom shader. However, SWF should produce much higher image quality and also two intersecting SWF fields would have perfect border. I'm working on this one and hope to upload other SWF tools in nearest future (added on 18 May 2019. We'll see how long it takes).
 
-# Other methods
-At this moment (May 2019) the very best algoritm for SDF generation is ImageMagik's Euclidean morphology:
+## Misc stuff 
+This stuff is for reference only and not included in the code.
+
+### ImageMagik commands to generate SDFs
+At this moment (May 2019) the very best algoritm for reater-based SDF generation is ImageMagik's Euclidean morphology:
 
 ```sh
 convert "${infile}" \( +clone -negate -morphology Distance Euclidean:7 -level 50%,-50% \) -morphology Distance Euclidean:7 -compose Plus -composite -level 45%,55% -filter Jinc -distort Resize 25.0% "${outfile}"
 ```
 
-
-GLSL pixel shader code for ideal font rendering:
+### Shader
+GLSL pixel shader code for SDF font rendering:
 
 ```glsl
 #define _SIMPLE_VERSION
@@ -92,3 +94,6 @@ Above shader have 3 different modes:
 * Combatibility mode (enabled with ```__COMPAT__``` define) - for old hardware and GLSL 1.5
 * Simple (enabled with ```SIMPLE_VERSION```) - fast but acceptable implementation
 * default - slow, but great resulting image quality for both upscaling and downscaling. Some ideas taken from Cinder-SdfText project
+
+### Vector-based distance fields
+Also best quality SDFs are generated from vector graphics. Very best generator among with 4-colored SDF is (msdf)[https://github.com/Chlumsky/msdfgen] project and if you want to draw fonts in runtime it would be wise to use pseude SDF-based bezier curve rendering by Adam Simmons: <https://www.shadertoy.com/view/ltXSDB>.
