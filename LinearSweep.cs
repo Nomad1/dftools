@@ -1,4 +1,4 @@
-﻿#define PROFILE
+﻿//#define PROFILE
 
 using System;
 #if !NO_NUMERICS
@@ -35,35 +35,31 @@ namespace DistanceFieldTool
             if (obstacleCandidate.Z <= 1)
                 return;
 
-            int distance = (x - value.X) * (x - value.X) + (y - value.Y) * (y - value.Y); // squared distance from myPoint to value
+            int distance =
+                // Math.Abs(x - value.X) + Math.Abs(y - value.Y); // Manhattan distance
+                (x - value.X) * (x - value.X) + (y - value.Y) * (y - value.Y); // squared distance from myPoint to value
 
-            if (distance < obstacleCandidate.Z)
+            if (distance <= obstacleCandidate.Z)
                 obstacleCandidate = new Vector3i(value.X, value.Y, distance);
         }
 
-        private static Vector3i PreProcessObstacle(bool isObstacle, int x, int y, int imageWidth, int imageHeight)
+        public delegate bool CheckFunc<T>(T param);
+
+        public static float[] AnalyzeGrayscale(byte[] pixelData, int imageWidth, int imageHeight, bool extraPass = true, byte threshold = 0)
         {
-            Vector3i myPoint = new Vector3i(x, y, 0);
-
-            if (isObstacle)
-                return myPoint;
-
-            if (x == 0)
-                return new Vector3i(-1, y, 1);
-
-            if (y == 0)
-                return new Vector3i(x, -1, 1);
-
-            if (x == imageWidth - 1)
-                return new Vector3i(imageWidth, y, 1);
-
-            if (y == imageHeight - 1)
-                return new Vector3i(x, imageHeight, 1);
-
-            return new Vector3i(-1, -1, int.MaxValue);
+            return AnalyzeGrayscale(pixelData, imageWidth, imageHeight, (byte pixel) => pixel > threshold, null, extraPass);
         }
 
-        public static float[] AnalyzeGrayscale(byte[] pixelData, int imageWidth, int imageHeight, bool extraPass = true)
+        /// <summary>
+        /// Performs Linear Sweep calculation for distance fields
+        /// </summary>
+        /// <param name="pixelData">input pixels</param>
+        /// <param name="imageWidth">width</param>
+        /// <param name="imageHeight">heigth</param>
+        /// <param name="closestPoints">output array with Voronoi point indices</param>
+        /// <param name="extraPass">perform additional sanity check pass</param>
+        /// <returns>array of nearest distances</returns>
+        public static float[] AnalyzeGrayscale<T>(T[] pixelData, int imageWidth, int imageHeight, CheckFunc<T> checker, int[] closestPoints = null, bool extraPass = true, bool normalize = true)
         {
 #if PROFILE
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -76,7 +72,10 @@ namespace DistanceFieldTool
             for (int y = 0; y < imageHeight; y++)
                 for (int x = 0; x < imageWidth; x++)
                 {
-                    points[index] = PreProcessObstacle(pixelData[index] != 0, x, y, imageWidth, imageHeight);
+                    points[index] = checker(pixelData[index]) ?
+                        new Vector3i(x, y, 0):
+                        new Vector3i(x == 0 ? -imageWidth : x == imageWidth - 1 ? imageWidth * 2 : x, y == 0 ? -imageHeight : y == imageHeight - 1 ? imageHeight * 2 : y, int.MaxValue);
+
                     index++;
                 }
 
@@ -163,13 +162,24 @@ namespace DistanceFieldTool
             // distance calculation
             float[] values = new float[points.Length];
 
-            for (int i = 0; i < points.Length; i++)
-                values[i] = (float)Math.Sqrt(points[i].Z); // calculate correct distance
+            if (normalize)
+            {
+                for (int i = 0; i < points.Length; i++)
+                    values[i] = (float)Math.Sqrt(points[i].Z); // calculate correct distance
+            } else
+                for (int i = 0; i<points.Length; i++)
+                    values[i] = points[i].Z; // calculate correct distance
 
 #if PROFILE
             sw.Stop();
             Console.WriteLine("Distance calculation: {0}", sw.ElapsedMilliseconds);
 #endif
+
+            if (closestPoints != null)
+            {
+                for (int i = 0; i < points.Length; i++)
+                    closestPoints[i] = points[i].X + points[i].Y * imageWidth;
+            }
 
             return values;
         }

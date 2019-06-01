@@ -5,7 +5,7 @@ using PositionType = System.Numerics.Vector2i;
 #endif
 
 namespace DistanceFieldTool
-{   
+{
     // Ported from https://github.com/cginternals/openll-asset-generator/blob/master/source/llassetgen/source/DistanceTransform.cpp
     public class DeadReckoning
     {
@@ -96,7 +96,7 @@ namespace DistanceFieldTool
             }
         }
 
-        public float [] Transform(float backgroundVal)
+        public float[] Transform(float backgroundVal, int [][] closestPoints = null)
         {
             for (int y = 0; y < m_imageHeight; ++y)
                 for (int x = 0; x < m_imageWidth; ++x)
@@ -136,9 +136,35 @@ namespace DistanceFieldTool
                     PositionType pos = new PositionType(x, y);
                     if (getPixel(pos) != 0)
                         setOutputPixel(pos, -getOutputPixel(pos));
+
+                    if (closestPoints != null)
+                    {
+                        var npos = getPosAt(pos);
+                        closestPoints[pos.Y * m_imageWidth + pos.X] = new[] { npos.X, npos.Y };
+                    }
                 }
 
             return m_output;
+        }
+
+        public static float[] AnalyzeGrayscale(byte[] pixelData, int imageWidth, int imageHeight, int[][] closestPoints = null, bool extraPass = true, byte threshold = 0)
+        {
+            byte[] data = new byte[imageWidth * imageHeight];
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                int pixel = pixelData[i];
+
+                if (pixel > threshold)
+                {
+                    data[i] = 255;
+                }
+                else
+                    data[i] = 0;
+            }
+
+            DeadReckoning dr = new DeadReckoning(data, imageWidth, imageHeight);
+            return dr.Transform(float.MaxValue, closestPoints);
         }
     }
 }
