@@ -397,7 +397,7 @@ namespace DistanceFieldTool
         /// <param name="outFile">Out file.</param>
         public static void SaveBitmap(int[] data, int imageWidth, int imageHeight, string outFile)
         {
-            GCHandle gch;
+            GCHandle gch = default(GCHandle);
 
             try
             {
@@ -413,7 +413,8 @@ namespace DistanceFieldTool
             }
             finally
             {
-                gch.Free();
+                if (gch != null && gch.IsAllocated)
+                    gch.Free();
             }
         }
 
