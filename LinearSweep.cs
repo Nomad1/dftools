@@ -17,11 +17,11 @@ namespace DistanceFieldTool
 #if NO_NUMERICS
         public struct Vector3i
         {
-            public readonly int X;
-            public readonly int Y;
+            public readonly ushort X;
+            public readonly ushort Y;
             public readonly int Z;
 
-            public Vector3i(int x, int y, int z)
+            public Vector3i(ushort x, ushort y, int z)
             {
                 X = x;
                 Y = y;
@@ -45,9 +45,9 @@ namespace DistanceFieldTool
 
         public delegate bool CheckFunc<T>(T param);
 
-        public static float[] AnalyzeGrayscale(byte[] pixelData, int imageWidth, int imageHeight, bool extraPass = true, byte threshold = 0)
+        public static float[] AnalyzeGrayscale(byte[] pixelData, int imageWidth, int imageHeight, bool extraPass = true, byte threshold = 0, bool normalize = true)
         {
-            return AnalyzeGrayscale(pixelData, imageWidth, imageHeight, (byte pixel) => pixel > threshold, null, extraPass);
+            return AnalyzeGrayscale(pixelData, imageWidth, imageHeight, (byte pixel) => pixel > threshold, null, extraPass, normalize);
         }
 
         /// <summary>
@@ -69,12 +69,10 @@ namespace DistanceFieldTool
 
             // pre processing
             int index = 0;
-            for (int y = 0; y < imageHeight; y++)
-                for (int x = 0; x < imageWidth; x++)
+            for (ushort y = 0; y < imageHeight; y++)
+                for (ushort x = 0; x < imageWidth; x++)
                 {
-                    points[index] = checker(pixelData[index]) ?
-                        new Vector3i(x, y, 0):
-                        new Vector3i(x == 0 ? -imageWidth : x == imageWidth - 1 ? imageWidth * 2 : x, y == 0 ? -imageHeight : y == imageHeight - 1 ? imageHeight * 2 : y, int.MaxValue);
+                    points[index] = new Vector3i(x, y, checker(pixelData[index]) ? 0 : int.MaxValue);
 
                     index++;
                 }
@@ -87,8 +85,8 @@ namespace DistanceFieldTool
 #endif
 
             // forward processing
-            for (int y = 1; y < imageHeight - 1; y++)
-                for (int x = 1; x < imageWidth - 1; x++)
+            for (int y = 1; y < imageHeight; y++)
+                for (int x = 1; x < imageWidth; x++)
                 {
                     index = x + y * imageWidth;
                     if (points[index].Z <= 1)
@@ -108,8 +106,8 @@ namespace DistanceFieldTool
 #endif
 
             // backward processing
-            for (int y = imageHeight - 2; y > 0; y--)
-                for (int x = imageWidth - 2; x > 0; x--)
+            for (int y = imageHeight - 2; y >= 0; y--)
+                for (int x = imageWidth - 2; x >= 0; x--)
                 {
                     index = x + y * imageWidth;
 
@@ -121,6 +119,7 @@ namespace DistanceFieldTool
                     CheckObstacle(ref points[index], x, y, points[index + imageWidth + 1]); // x + 1, y + 1
                     CheckObstacle(ref points[index], x, y, points[index + imageWidth - 1]); // x - 1, y + 1
                 }
+
 
 #if PROFILE
             sw.Stop();
@@ -157,6 +156,15 @@ namespace DistanceFieldTool
                 sw.Start();
 #endif
             }
+            else
+            {
+                // process corners
+
+                CheckObstacle(ref points[0], 1, 0, points[imageWidth + 1]); // (0, 0)
+                CheckObstacle(ref points[imageWidth - 1], imageWidth - 1, 0, points[imageWidth - 2]); // (imagewidth - 1, 0)
+                CheckObstacle(ref points[imageWidth * (imageHeight - 1)], 0, imageHeight - 1, points[imageWidth * (imageHeight - 1) + 1]); // (0, imageheight - 1)
+                CheckObstacle(ref points[imageWidth - 1 + imageWidth * (imageHeight - 1)], imageWidth - 1, imageHeight - 1, points[imageWidth * (imageHeight - 1) + imageWidth - 2]);  // (imagewidth - 1, imageheight - 1)
+            }
 
 
             // distance calculation
@@ -166,8 +174,9 @@ namespace DistanceFieldTool
             {
                 for (int i = 0; i < points.Length; i++)
                     values[i] = (float)Math.Sqrt(points[i].Z); // calculate correct distance
-            } else
-                for (int i = 0; i<points.Length; i++)
+            }
+            else
+                for (int i = 0; i < points.Length; i++)
                     values[i] = points[i].Z; // calculate correct distance
 
 #if PROFILE
