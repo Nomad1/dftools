@@ -32,7 +32,7 @@ namespace DistanceFieldTool
 
         private static void CheckObstacle(ref Vector3i obstacleCandidate, int x, int y, Vector3i value)
         {
-            if (obstacleCandidate.Z <= 1)
+            if (obstacleCandidate.Z <= 1 || value.Z == int.MaxValue)
                 return;
 
             int distance =
@@ -40,7 +40,7 @@ namespace DistanceFieldTool
                 (x - value.X) * (x - value.X) + (y - value.Y) * (y - value.Y); // squared distance from myPoint to value
 
             if (distance <= obstacleCandidate.Z)
-                obstacleCandidate = new Vector3i(value.X, value.Y, distance);
+                obstacleCandidate = new Vector3i(value.X, value.Y, distance);   
         }
 
         public delegate bool CheckFunc<T>(T param);
@@ -95,7 +95,8 @@ namespace DistanceFieldTool
                     CheckObstacle(ref points[index], x, y, points[index - 1]); // x - 1
                     CheckObstacle(ref points[index], x, y, points[index - imageWidth]); // y - 1
                     CheckObstacle(ref points[index], x, y, points[index - imageWidth - 1]); // x - 1, y - 1
-                    CheckObstacle(ref points[index], x, y, points[index - imageWidth + 1]); // x + 1, y - 1
+                    if (x < imageWidth - 1)
+                        CheckObstacle(ref points[index], x, y, points[index - imageWidth + 1]); // x + 1, y - 1
                 }
 
 #if PROFILE
@@ -105,7 +106,7 @@ namespace DistanceFieldTool
             sw.Start();
 #endif
 
-            // backward processing
+            //backward processing
             for (int y = imageHeight - 2; y >= 0; y--)
                 for (int x = imageWidth - 2; x >= 0; x--)
                 {
@@ -117,7 +118,8 @@ namespace DistanceFieldTool
                     CheckObstacle(ref points[index], x, y, points[index + 1]); // x + 1
                     CheckObstacle(ref points[index], x, y, points[index + imageWidth]); // y + 1
                     CheckObstacle(ref points[index], x, y, points[index + imageWidth + 1]); // x + 1, y + 1
-                    CheckObstacle(ref points[index], x, y, points[index + imageWidth - 1]); // x - 1, y + 1
+                    if (x > 0)
+                        CheckObstacle(ref points[index], x, y, points[index + imageWidth - 1]); // x - 1, y + 1
                 }
 
 
@@ -127,7 +129,6 @@ namespace DistanceFieldTool
             sw.Reset();
             sw.Start();
 #endif
-
             if (extraPass)
             {
                 // final pass. sometimes needed
@@ -166,7 +167,6 @@ namespace DistanceFieldTool
                 CheckObstacle(ref points[imageWidth - 1 + imageWidth * (imageHeight - 1)], imageWidth - 1, imageHeight - 1, points[imageWidth * (imageHeight - 1) + imageWidth - 2]);  // (imagewidth - 1, imageheight - 1)
             }
 
-
             // distance calculation
             float[] values = new float[points.Length];
 
@@ -176,8 +176,10 @@ namespace DistanceFieldTool
                     values[i] = (float)Math.Sqrt(points[i].Z); // calculate correct distance
             }
             else
+            {
                 for (int i = 0; i < points.Length; i++)
-                    values[i] = points[i].Z; // calculate correct distance
+                    values[i] = points[i].Z; // leave squared distance
+            }
 
 #if PROFILE
             sw.Stop();
