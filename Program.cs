@@ -12,6 +12,8 @@ using PositionType = System.Numerics.Vector2i;
 namespace DistanceFieldTool
 {
 #if NO_NUMERICS
+    // just in case you don't want to reference System.Numerics here goes custom Vector3i implementation
+
     public struct Vector3i
     {
         public readonly int X;
@@ -29,8 +31,6 @@ namespace DistanceFieldTool
 
     public class DistanceFieldTool
     {
-        // just in case you don't want to reference System.Numerics here goes custom Vector3i implementation
-
         private static string s_syntax = "Syntax: DistanceFieldTool.exe input.png output.png [width] [algorithm]\n" +
                 "Algorythm could be one of:\n" +
                 "\tsweep - Linear Sweep (custom algorithm, default)\n" +
