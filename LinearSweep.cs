@@ -8,27 +8,13 @@ using System.Numerics;
 namespace DistanceFieldTool
 {
     /// <summary>
+    /// This is custom algorithm invented by Nomad. By coincedence it's very similar to Dead Reckoning algo
     /// This approach scans image to find largest unobstructed area.
     /// Two scans are needed: in forward and backwards direction
     /// </summary>
     public static class LinearSweep
     {
         // just in case you don't want to referene System.Numerics, custom Vector3i implementation
-#if NO_NUMERICS
-        public struct Vector3i
-        {
-            public readonly ushort X;
-            public readonly ushort Y;
-            public readonly int Z;
-
-            public Vector3i(ushort x, ushort y, int z)
-            {
-                X = x;
-                Y = y;
-                Z = z;
-            }
-        }
-#endif
 
         private static void CheckObstacle(ref Vector3i obstacleCandidate, int x, int y, Vector3i value)
         {
@@ -36,8 +22,11 @@ namespace DistanceFieldTool
                 return;
 
             int distance =
-                // Math.Abs(x - value.X) + Math.Abs(y - value.Y); // Manhattan distance
+#if MANHATTAN
+                Math.Abs(x - value.X) + Math.Abs(y - value.Y); // Manhattan distance. Gives nice picture but broken SDF
+#else
                 (x - value.X) * (x - value.X) + (y - value.Y) * (y - value.Y); // squared distance from myPoint to value
+#endif
 
             if (distance <= obstacleCandidate.Z)
                 obstacleCandidate = new Vector3i(value.X, value.Y, distance);   
@@ -51,7 +40,8 @@ namespace DistanceFieldTool
         }
 
         /// <summary>
-        /// Performs Linear Sweep calculation for distance fields
+        /// Performs Linear Sweep calculation for distance fields.
+        /// Note that it requires two passes to calculate negative and positive distance fields
         /// </summary>
         /// <param name="pixelData">input pixels</param>
         /// <param name="imageWidth">width</param>
@@ -67,7 +57,8 @@ namespace DistanceFieldTool
 #endif
             Vector3i[] points = new Vector3i[pixelData.Length];
 
-            // pre processing
+            // pre processing - fill the array with int.MaxValue for empty cells and 0 with occupied
+
             int index = 0;
             for (ushort y = 0; y < imageHeight; y++)
                 for (ushort x = 0; x < imageWidth; x++)
@@ -84,7 +75,8 @@ namespace DistanceFieldTool
             sw.Start();
 #endif
 
-            // forward processing
+            // forward processing. We need to skip first row and column so it's easier to have two loops for that
+
             for (int y = 1; y < imageHeight; y++)
                 for (int x = 1; x < imageWidth; x++)
                 {
@@ -106,7 +98,8 @@ namespace DistanceFieldTool
             sw.Start();
 #endif
 
-            //backward processing
+            //backward processing. We need to skip last row and column
+
             for (int y = imageHeight - 2; y >= 0; y--)
                 for (int x = imageWidth - 2; x >= 0; x--)
                 {

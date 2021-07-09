@@ -11,24 +11,25 @@ using PositionType = System.Numerics.Vector2i;
 
 namespace DistanceFieldTool
 {
+#if NO_NUMERICS
+    public struct Vector3i
+    {
+        public readonly int X;
+        public readonly int Y;
+        public readonly int Z;
+
+        public Vector3i(int x, int y, int z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+    }
+#endif
+
     public class DistanceFieldTool
     {
-        // just in case you don't want to referene System.Numerics, custom Vector3i implementation
-#if NO_NUMERICS
-        public struct Vector3i
-        {
-            public readonly int X;
-            public readonly int Y;
-            public readonly int Z;
-
-            public Vector3i(int x, int y, int z)
-            {
-                X = x;
-                Y = y;
-                Z = z;
-            }
-        }
-#endif
+        // just in case you don't want to reference System.Numerics here goes custom Vector3i implementation
 
         private static string s_syntax = "Syntax: DistanceFieldTool.exe input.png output.png [width] [algorithm]\n" +
                 "Algorythm could be one of:\n" +

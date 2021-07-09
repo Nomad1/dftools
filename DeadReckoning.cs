@@ -11,7 +11,7 @@ namespace DistanceFieldTool
     {
         // just in case you don't want to referene System.Numerics, custom Vector2i implementation
 #if NO_NUMERICS
-        public struct PositionType
+        private struct PositionType
         {
             public readonly int X;
             public readonly int Y;
