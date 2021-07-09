@@ -14,7 +14,7 @@ The tool implements different algorithms for Signed Field generation:
 This stuff is for reference only and not included in the code.
 
 ### ImageMagik commands to generate SDFs
-At this moment (May 2019) the very best algoritm for reater-based SDF generation is ImageMagik's Euclidean morphology:
+At this moment (May 2019) the most accurate algoritm for distance-based SDF generation is ImageMagik's Euclidean morphology:
 
 ```sh
 convert "${infile}" \( +clone -negate -morphology Distance Euclidean:7 -level 50%,-50% \) -morphology Distance Euclidean:7 -compose Plus -composite -level 45%,55% -filter Jinc -distort Resize 25.0% "${outfile}"
