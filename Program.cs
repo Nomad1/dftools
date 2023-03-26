@@ -31,7 +31,7 @@ namespace DistanceFieldTool
 
     public class DistanceFieldTool
     {
-        private static string s_syntax = "Syntax: DistanceFieldTool.exe input.png output.png [width] [algorithm]\n" +
+        private static readonly string s_syntax = "Syntax: DistanceFieldTool.exe input.png output.png [width] [algorithm]\n" +
                 "Algorythm could be one of:\n" +
                 "\tsweep - Linear Sweep (custom algorithm, default)\n" +
                 "\tbrute - Brute Force approach\n" +
